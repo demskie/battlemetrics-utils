@@ -1,0 +1,6 @@
+text=lf
+*.py eol=lf
+*.yml eol=lf
+
+# vendored sources
+vendor/ linguist-vendored

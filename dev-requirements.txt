@@ -1,0 +1,10 @@
+black
+isort
+pylama
+pylint
+mypy
+pep8
+mypy
+pyflakes
+pytest
+-r requirements.txt

@@ -1,0 +1,21 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+.pytest_cache
+.mypy_cache
+.cache
+*.py[cod]
+*.DS_Store
+
+# Ignore log and database files
+*.log
+*.db
+
+# Ignore files with sensitive data
+config.yml*
+config.json
+*.dev
+.vscode/
+*secret.json
+*.code-workspace
+*.env
+token.txt
