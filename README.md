@@ -3,6 +3,7 @@
 ### Installation (windows)
 
 ```
+# install python3.7 (or later)
 pip3 install virtualenv
 pip3 install virtualenvwrapper-win
 mkvirtualenv battlemetrics
