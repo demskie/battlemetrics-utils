@@ -1,7 +1,5 @@
-
 from dataclasses import dataclass, field
-
-from typing import List, Dict, Union
+from typing import Dict, List, Union
 
 from lib.player import Player
 
@@ -19,18 +17,10 @@ class TimeTracker:
             self._players[id].add_name(name)
             self._players[id].add_seconds(seconds)
         else:
-            self._players[id] = Player(
-                id=id,
-                names=[name],
-                seconds=seconds
-            )
+            self._players[id] = Player(id=id, names=[name], seconds=seconds)
 
     def get_player_by_id(self, id: str) -> Union[Player, None]:
         return self._players.get(id, None)
 
     def get_player_by_name(self, name: str) -> List[Player]:
-        return list(
-            filter(
-                lambda x: name in x.names, self._players.values()
-            )
-        )
+        return list(filter(lambda x: name in x.names, self._players.values()))

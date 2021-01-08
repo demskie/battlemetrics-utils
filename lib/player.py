@@ -3,7 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from functools import total_ordering
 from math import ceil
-
 from typing import List
 
 
@@ -21,7 +20,11 @@ class Player:
         return isinstance(other, Player) and self.seconds == other.seconds
 
     def __str__(self) -> str:
-        return f"'{self.names[0]}' {int(self.seconds/60/60)}hrs {ceil(self.seconds/60)%60}mins"
+        return (
+            f"'{self.names[0]}' "
+            f"{int(self.seconds/60/60)}hrs "
+            f"{ceil(self.seconds/60)%60}mins"
+        )
 
     def add_name(self, name: str) -> None:
         self.names = list(set([*self.names, name]))
