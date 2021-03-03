@@ -31,6 +31,7 @@ def cli() -> None:
 )
 @click.option("--server-id", type=click.INT)
 @click.option("--server-name", type=click.STRING)
+@click.option("--player-name", type=click.STRING)
 def seeders(
     days: int,
     desired_players: int,
@@ -39,6 +40,7 @@ def seeders(
     token_path: Optional[str],
     server_id: Optional[int],
     server_name: Optional[str],
+    player_name: Optional[str],
 ):
     if not token:
         if not token_path:
@@ -74,7 +76,7 @@ def seeders(
         response: Optional[requests.Response] = None
 
         for _ in range(5):
-            print(".", end="", flush=True)
+            # print(".", end="", flush=True)
             response = requests.get(
                 url=next_url, params=params, headers={"Authorization": f"Bearer {token}"}
             )
@@ -88,7 +90,9 @@ def seeders(
             response.raise_for_status()
 
         for session in response.json().get("data", []):
-            # return print(json.dumps(session, indent=2))
+            name: str = session.get("attributes", {}).get("name", "")
+            if player_name and name.upper().find(player_name.upper()) == -1:
+                continue
             sessions.insert(
                 0,
                 Session(
@@ -96,7 +100,7 @@ def seeders(
                     .get("player", {})
                     .get("data", {})
                     .get("id", None),
-                    name=session.get("attributes", {}).get("name", ""),
+                    name=name,
                     start=session.get("attributes", {}).get("start", None),
                     stop=session.get("attributes", {}).get("stop", dt.isoformat() + "Z"),
                 ),
@@ -105,7 +109,7 @@ def seeders(
         next_url = response.json().get("links", {}).get("next", None)
         params = None
 
-    print(".", flush=True)
+    # print(".", flush=True)
 
     session_stack: List[Session] = list()
 
