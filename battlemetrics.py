@@ -12,6 +12,7 @@ from typing import Dict, List, Optional
 import click
 import requests
 
+from lib.player import Player
 from lib.session import Session
 from lib.tracker import TimeTracker
 
@@ -91,8 +92,6 @@ def seeders(
 
         for session in response.json().get("data", []):
             name: str = session.get("attributes", {}).get("name", "")
-            if player_name and name.upper().find(player_name.upper()) == -1:
-                continue
             sessions.insert(
                 0,
                 Session(
@@ -139,7 +138,18 @@ def seeders(
                 seconds=duration,
             )
 
-    for player in sorted(tracker, reverse=True)[:size]:
+    players: List[Player] = sorted(tracker, reverse=True)
+    if player_name:
+        for player in players[:]:
+            match = False
+            for x in player.names:
+                if x.upper().find(player_name.upper()) >= 0:
+                    match = True
+                    break
+            if not match:
+                players.remove(player)
+
+    for player in players[:size]:
         print(
             f"{player.names[0].ljust(32)} "
             f"{int(player.seconds / 60 / 60)}hrs "
