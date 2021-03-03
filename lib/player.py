@@ -12,6 +12,9 @@ class Player:
     id: str
     names: List[str]
     seconds: int
+    kills: int = 0
+    deaths: int = 0
+    points: int = 0
 
     def __lt__(self, other: Player) -> bool:
         return self.seconds < other.seconds

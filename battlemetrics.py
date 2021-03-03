@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+import sys
 from datetime import datetime, timedelta
 from math import ceil, floor
 from time import sleep
@@ -21,7 +23,7 @@ def cli() -> None:
 
 @click.command()
 @click.option("--days", type=click.IntRange(0, 365), default=30)
-@click.option("--desired-players", type=click.IntRange(2, 999), default=32)
+@click.option("--desired-players", type=click.IntRange(2, 999), default=36)
 @click.option("--size", type=click.IntRange(1, 9999), default=20)
 @click.option("--token", type=click.STRING)
 @click.option(
@@ -72,18 +74,21 @@ def seeders(
         response: Optional[requests.Response] = None
 
         for _ in range(5):
+            print(".", end="", flush=True)
             response = requests.get(
                 url=next_url, params=params, headers={"Authorization": f"Bearer {token}"}
             )
             if response.ok:
                 break
-            sleep(1 / 5)
+        if not response and response is not None:
+            print(response.json())
         assert response
 
         if not response.ok:
             response.raise_for_status()
 
         for session in response.json().get("data", []):
+            # return print(json.dumps(session, indent=2))
             sessions.insert(
                 0,
                 Session(
@@ -100,33 +105,34 @@ def seeders(
         next_url = response.json().get("links", {}).get("next", None)
         params = None
 
-    online_sessions: List[Session] = list()
+    print(".", flush=True)
+
+    session_stack: List[Session] = list()
 
     for session in sessions:
-        cursor_time = session.get_start_time()
+        cursor = session.get_start_time()
 
-        for online_session in online_sessions.copy():
-            if len(online_sessions) < desired_players:
+        for other_session in session_stack.copy():
+            if len(session_stack) < desired_players:
+                duration = (cursor - other_session.get_start_time()).seconds
                 tracker.add(
-                    id=online_session.id,
-                    name=online_session.name,
-                    seconds=(cursor_time - online_session.get_start_time()).seconds,
+                    id=other_session.id,
+                    name=other_session.name,
+                    seconds=duration,
                 )
-            if cursor_time < online_session.get_stop_time():
-                online_session.set_start_time(cursor_time)
+            if cursor < other_session.get_stop_time():
+                other_session.set_start_time(cursor)
             else:
-                online_sessions.remove(online_session)
+                session_stack.remove(other_session)
+        session_stack.append(session)
 
-        online_sessions.append(session)
-
-    if len(online_sessions) < desired_players:
-        for online_session in online_sessions:
+    if len(session_stack) < desired_players:
+        for session in session_stack:
+            duration = (session.get_stop_time() - session.get_start_time()).seconds
             tracker.add(
-                id=online_session.id,
-                name=online_session.name,
-                seconds=(
-                    online_session.get_stop_time() - online_session.get_start_time()
-                ).seconds,
+                id=session.id,
+                name=session.name,
+                seconds=duration,
             )
 
     for player in sorted(tracker, reverse=True)[:size]:
@@ -202,8 +208,10 @@ def search_servers(query: str, token: str, online_only=True) -> Dict[int, str]:
         url="https://api.battlemetrics.com/servers",
         params={"fields[server]": "name,status", "filter[search]": f'"{query}"'},
         headers={"Authorization": f"Bearer {token}"},
-    )
-    for server in response.json()["data"]:
+    ).json()
+    if "data" not in response:
+        raise Exception(f"{response}")
+    for server in response["data"]:
         if server["attributes"]["status"] == "online" or not online_only:
             results[int(server["id"])] = server["attributes"]["name"]
     return results
